@@ -12,14 +12,14 @@ class AbstractSource():
 
     def load_single(symbol):
         """
-        This function should return dataframe, containing ohlc, volume, split
-        and dividends data for specified symbol
+        This function should return pandas dataframe, containing ohlc, volume,
+        split and dividends data for specified symbol
         """
         raise NotImplementedError
 
     def load_batch(symbols):
         """
-        This function takes list of symbols and should return list of
+        This function takes list of symbols and should return list of pandas
         dataframes, containing data for each specified symbol
         """
         raise NotImplementedError
@@ -39,13 +39,30 @@ class AlphaVantage(AbstractSource):
             key=os.environ['ALPHA_VANTAGE_KEY'],
             output_format=output_format
         )
+        self.COLUMNS_DICT = {
+            '1. open': 'open',
+            '2. high': 'high',
+            '3. low': 'low',
+            '4. close': 'close',
+            '5. adjusted close': 'adj_close',
+            '6. volume': 'volume',
+            '7. dividend amount': 'dividend',
+            '8. split coefficient': 'split_coeff',
+        }
 
     def load_single(self, symbol, format='full'):
-        return self.ts.get_daily_adjusted(symbol, format)[0]
 
-    def check_symbol(self, symbol):
+        df = self.ts.get_daily_adjusted(symbol, format)[0]
+        df.rename(columns=self.COLUMNS_DICT, inplace=True)
+
+        return df
+
+    def load_batch(self, symbols, format='full'):
+        pass
+
+    def symbol_has_data(self, symbol):
         try:
-            self.get_series(symbol, format='compact')
+            self.load_single(symbol, format='compact')
         except ValueError:
             return False
         return True
