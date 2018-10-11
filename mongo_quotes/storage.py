@@ -1,3 +1,4 @@
+import time
 from pymongo import MongoClient
 
 from .sources import source
@@ -49,34 +50,12 @@ def remove_symbol(symbol):
     return "Symbol %s not found in database" % symbol
 
 
-def get_series(symbol, collection):
-    return COLLECTIONS[collection].find_one(
-        {'symbol': symbol},
-    )['quotes']
-
-
-def write_series(symbol, data, collection_name):
-    doc = {
-        'symbol': symbol,
-        'quotes': data,
-    }
-    collection = COLLECTIONS[collection_name]
-    collection.replace_one(
-        {'symbol': symbol}, doc,
-        upsert=True
-    )
-
-
-def get_for_date(date, symbols=[]):
-    pass
-
-
 def update_single(symbol):
     df = source.load_single(symbol)
     for column in df.columns:
         doc = {
             'symbol': symbol,
-            'quotes': df[column].to_json(),
+            'quotes': df[column].to_dict(),
         }
         COLLECTIONS[column].replace_one(
             {'symbol': symbol}, doc,
@@ -85,6 +64,41 @@ def update_single(symbol):
 
 
 def update_all():
-    for symbols in get_symbols():
-        update_single(symbols)
-    return 'Updated successfully'
+    symbols = get_symbols()
+    for i, symbol in enumerate(symbols, 1):
+        update_single(symbol)
+        if i < len(symbols):
+            time.sleep(20)
+    return 'Successfully updated data for %s' % symbols
+
+
+def get_series(symbol, collection):
+    return COLLECTIONS[collection].find_one(
+        {'symbol': symbol},
+    )['quotes']
+
+
+def get_batch_series(collection, symbols=None, start_date=None, end_date=None):
+    pass
+
+
+def get_quote(symbol, collection, date=None):
+    if date:
+        return COLLECTIONS[collection].find_one(
+            {
+                'symbol': symbol,
+            },
+            projection={
+                '_id': False,
+                'quotes.{}'.format(date): True
+            }
+        )['quotes'][date]
+    return COLLECTIONS[collection].find_one(
+        {
+            'symbol': symbol,
+        },
+        projection={
+            '_id': False,
+            'quotes': True,
+        },
+    )['quotes'].popitem()[1]

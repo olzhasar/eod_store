@@ -26,6 +26,16 @@ def get_series(collection, symbol):
     return jsonify(storage.get_series(symbol, collection))
 
 
+@app.route('/quote/<collection>/<symbol>')
+def get_quote(collection, symbol):
+    return jsonify(storage.get_quote(symbol, collection))
+
+
+@app.route('/quote/<collection>/<symbol>/<date>')
+def get_quote_date(collection, symbol, date):
+    return jsonify(storage.get_quote(symbol, collection, date))
+
+
 @app.route('/update/')
 def update_all():
     return storage.update_all()
