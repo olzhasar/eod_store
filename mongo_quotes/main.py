@@ -19,14 +19,18 @@ def all_symbols():
     if request.method == 'GET':
         return jsonify(store.get_symbols())
     else:
-        try:
-            symbol = request.args['symbol']
-        except KeyError:
+        symbols = request.args.getlist('symbol')
+        if not symbols:
             raise APIError("You must provide a valid symbol")
         if request.method == 'POST':
-            return store.add_symbol(symbol)
+            return store.add_symbols(symbols)
         elif request.method == 'DELETE':
-            return store.remove_symbol(symbol)
+            return store.remove_symbols(symbols)
+
+
+@app.route('/update/')
+def update_all():
+    return store.update_all()
 
 
 @app.route('/query/<symbol>', methods=['GET', ])
@@ -38,36 +42,12 @@ def query_single(symbol):
     return jsonify(store.query_single(symbol, fields))
 
 
-@app.route('/query_batch', methods=['GET', ])
-def query_batch():
+@app.route('/<field>', methods=['GET', ])
+def query_batch(field):
     symbols = request.args.getlist('symbol')
     if not symbols:
         raise APIError("No symbols provided")
-    try:
-        fields = request.args['fields']
-    except KeyError:
-        fields = 'ohlcavds'
-    return "Symbols: %s" % symbols
-
-
-@app.route('/daily/<collection>/<symbol>')
-def get_series(collection, symbol):
-    return jsonify(store.get_series(symbol, collection))
-
-
-@app.route('/quote/<collection>/<symbol>')
-def get_quote(collection, symbol):
-    return jsonify(store.get_quote(symbol, collection))
-
-
-@app.route('/quote/<collection>/<symbol>/<date>')
-def get_quote_date(collection, symbol, date):
-    return jsonify(store.get_quote(symbol, collection, date))
-
-
-@app.route('/update/')
-def update_all():
-    return store.update_all()
+    return store.query_batch(symbols, field)
 
 
 if __name__ == "__main__":

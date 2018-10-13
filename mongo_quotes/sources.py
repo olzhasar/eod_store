@@ -55,7 +55,7 @@ class AlphaVantage(AbstractSource):
         df = self.ts.get_daily_adjusted(symbol, format)[0]
         df.rename(columns=self.COLUMNS_DICT, inplace=True)
 
-        return df
+        return df.to_dict()
 
     def load_batch(self, symbols, format='full'):
         pass
