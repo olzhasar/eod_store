@@ -1,16 +1,15 @@
 import time
 from pymongo import MongoClient
 
-from .sources import source
+from sources import source
+from exceptions import APIError
 
-client = MongoClient('localhost', 27017)
+client = MongoClient('mongodb://datastore:27017/mongo_quotes')
 db = client.quotes_db
 
 # Dictionary of collections in our database
 
 COLLECTIONS = {
-    # General collection for storing and quickly retrieving all symbols in db:
-    'symbols': db.symbols,
     # Specific collections for each type of daily data:
     'open': db.open,
     'high': db.high,
@@ -22,32 +21,35 @@ COLLECTIONS = {
     'split_coeff': db.split_coeff,
 }
 
+VALID_FIELDS = 'ohlcavds'
+
 
 def get_symbols():
-    return [doc['symbol'] for doc in COLLECTIONS['symbols'].find()]
+    return [doc['symbol'] for doc in db.symbols.find()]
 
 
-def is_in_database(symbol):
-    if COLLECTIONS['symbols'].find_one({'symbol': symbol}):
+def in_database(symbol):
+    if db.symbols.find_one({'symbol': symbol}):
         return True
     return False
 
 
 def add_symbol(symbol):
     if not source.symbol_has_data(symbol):
-        return "There is no data in source for specified symbol: %s" % symbol
-    if is_in_database(symbol):
-        return "Symbol %s already exists in database"
-    COLLECTIONS['symbols'].insert_one({'symbol': symbol})
+        raise("There is no data in source for specified symbol: %s" % symbol)
+    if in_database(symbol):
+        raise APIError("Symbol %s already exists in database" % symbol)
+    db.symbols.insert_one({'symbol': symbol})
     return "Successfully added symbol %s to database" % symbol
 
 
 def remove_symbol(symbol):
-    if is_in_database(symbol):
-        for collection in COLLECTIONS:
-            COLLECTIONS[collection].delete_one({'symbol': symbol})
-        return "Successfully deleted all data for symbol %s" % symbol
-    return "Symbol %s not found in database" % symbol
+    if not in_database(symbol):
+        raise APIError("Symbol %s not found in database" % symbol)
+    for collection in COLLECTIONS:
+        COLLECTIONS[collection].delete_one({'symbol': symbol})
+    db.symbols.delete_one({'symbol': symbol})
+    return "Successfully deleted all data for symbol %s" % symbol
 
 
 def update_single(symbol):
@@ -70,6 +72,19 @@ def update_all():
         if i < len(symbols):
             time.sleep(20)
     return 'Successfully updated data for %s' % symbols
+
+
+def query_single(symbol, fields="ohlcavds"):
+    if not in_database(symbol):
+        raise APIError("No data for symbol: %s in database" % symbol)
+    data = {}
+    for field in fields:
+        if field not in VALID_FIELDS:
+            raise APIError("Invalid field: %s" % field)
+        for collection in COLLECTIONS:
+            if collection.startswith(field):
+                data[collection] = get_series(symbol, collection)
+    return data
 
 
 def get_series(symbol, collection):

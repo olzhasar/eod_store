@@ -1,0 +1,17 @@
+datastore:
+  image: mongo:4.0.3
+  ports:
+    - "27017:27017"
+  volumes:
+      - './data:/data/db'
+frontend:
+  build: .
+  command: python -u mongo_quotes/main.py
+  ports:
+    - "5000:5000"
+  volumes:
+    - .:/mongo_quotes
+  env_file:
+    - variables.env
+  links:
+      - datastore
