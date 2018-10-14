@@ -1,17 +1,36 @@
-datastore:
-  image: mongo:4.0.3
-  ports:
-    - "27017:27017"
-  volumes:
-      - './data:/data/db'
-frontend:
-  build: .
-  command: python -u mongo_quotes/main.py
-  ports:
-    - "5000:5000"
-  volumes:
-    - .:/mongo_quotes
-  env_file:
-    - variables.env
-  links:
-      - datastore
+version: "3"
+services:
+  web:
+    build: .
+    command: >
+      gunicorn -b 0.0.0.0:5000
+      --access-logfile -
+      --reload
+      "main:app"
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./app:/app
+    env_file:
+      - variables.env
+    depends_on:
+        - datastore
+        - redis
+  datastore:
+    image: mongo:4.0.3
+    ports:
+      - "27017:27017"
+    volumes:
+        - ./data:/data/db
+  worker:
+    build: .
+    command: celery worker -B -l info -A main.celery
+    env_file:
+      - variables.env
+    depends_on:
+      - redis
+  redis:
+    image: redis:4.0.11
+    ports:
+      - "6379:6379"

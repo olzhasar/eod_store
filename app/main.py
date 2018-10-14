@@ -1,9 +1,21 @@
 #!/usr/bin/env python
+import os
 from flask import Flask, jsonify, request
+from celery import Celery
 from exceptions import APIError
+
 import store
 
 app = Flask(__name__)
+
+
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL',
+                                   'redis://localhost:6379')
+CELERY_RESULTS_BACKEND = os.environ.get('CELERY_BROKER_URL',
+                                        'redis://localhost:6379')
+
+celery = Celery(app.import_name, broker=CELERY_BROKER_URL,
+                backend=CELERY_RESULTS_BACKEND)
 
 
 @app.errorhandler(APIError)
