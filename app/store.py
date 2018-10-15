@@ -104,7 +104,7 @@ def query_single(symbol, fields="ohlcavds"):
     except FileNotFoundError:
         raise APIError("No file for %s" % symbol)
     response = Response(
-        response = df[columns].to_json(),
+        response=df[columns].to_json(),
         status=200,
         mimetype="application/json"
     )
@@ -123,7 +123,7 @@ def query_batch(symbols, field):
         data.append(df[field])
     data = pd.concat(data, axis=1, keys=symbols, sort=True)
     response = Response(
-        response = data.to_json(),
+        response=data.to_json(),
         status=200,
         mimetype="application/json"
     )

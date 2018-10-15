@@ -8,6 +8,9 @@ COPY requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
 
+RUN mkdir data/
+RUN touch data/symbols
+
 COPY /app /app
 
 WORKDIR /app
