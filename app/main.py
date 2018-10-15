@@ -1,21 +1,11 @@
 #!/usr/bin/env python
-import os
-from flask import Flask, jsonify, request
-from celery import Celery
+from flask import jsonify, request
+from factories import create_application, create_celery
 from exceptions import APIError
-
 import store
 
-app = Flask(__name__)
-
-
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL',
-                                   'redis://localhost:6379')
-CELERY_RESULTS_BACKEND = os.environ.get('CELERY_BROKER_URL',
-                                        'redis://localhost:6379')
-
-celery = Celery(app.import_name, broker=CELERY_BROKER_URL,
-                backend=CELERY_RESULTS_BACKEND)
+app = create_application()
+celery = create_celery(app)
 
 
 @app.errorhandler(APIError)
@@ -51,7 +41,7 @@ def query_single(symbol):
         fields = request.args['fields']
     except KeyError:
         fields = 'ohlcavds'
-    return jsonify(store.query_single(symbol, fields))
+    return store.query_single(symbol, fields)
 
 
 @app.route('/<field>', methods=['GET', ])

@@ -24,7 +24,7 @@ class AbstractSource():
         """
         raise NotImplementedError
 
-    def check_symbol(symbol):
+    def has_data(symbol):
         """
         This function checks whether data for given ticket exists in this
         source and returns boolean
@@ -55,12 +55,12 @@ class AlphaVantage(AbstractSource):
         df = self.ts.get_daily_adjusted(symbol, format)[0]
         df.rename(columns=self.COLUMNS_DICT, inplace=True)
 
-        return df.to_dict()
+        return df
 
     def load_batch(self, symbols, format='full'):
         pass
 
-    def symbol_has_data(self, symbol):
+    def has_data(self, symbol):
         try:
             self.load_single(symbol, format='compact')
         except ValueError:
