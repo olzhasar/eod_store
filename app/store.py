@@ -71,7 +71,7 @@ def remove_symbols(symbols):
     return "Successfully deleted all data for symbols %s" % symbols
 
 
-@celery.task()
+@celery.task
 def update_background(symbols):
     for i, symbol in enumerate(symbols, 1):
         df = source.load_single(symbol)
@@ -83,6 +83,11 @@ def update_background(symbols):
         print("Successfully updated data for %s" % symbol)
         if i < len(symbols):
             time.sleep(20)
+
+
+@celery.task
+def print_something():
+    print("SOMETHING")
 
 
 def update_all():

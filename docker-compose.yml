@@ -33,6 +33,9 @@ services:
         target: /data
         volume:
           nocopy: true
+      - type: bind
+        source: ./app
+        target: /app
     env_file:
       - variables.env
     depends_on:

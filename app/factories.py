@@ -27,4 +27,15 @@ def create_celery(application):
                 return self.run(*args, **kwargs)
 
     celery.Task = ContextTask
+
+    celery.conf.beat_schedule = {
+        'print-every-30-seconds': {
+            'task': 'store.print_something',
+            'schedule': 30.0,
+            'args': ()
+        },
+    }
+
+    celery.conf.timezone = 'UTC'
+
     return celery
