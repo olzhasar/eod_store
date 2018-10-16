@@ -11,9 +11,9 @@ RUN pip install -r requirements.txt
 RUN mkdir data/
 RUN touch data/symbols
 
-COPY /app /app
+COPY /api /api
 
-WORKDIR /app
+WORKDIR /api
 
 EXPOSE 5000
 

@@ -17,8 +17,8 @@ services:
         volume:
           nocopy: true
       - type: bind
-        source: ./app
-        target: /app
+        source: ./api
+        target: /api
     env_file:
       - variables.env
     depends_on:
@@ -34,8 +34,8 @@ services:
         volume:
           nocopy: true
       - type: bind
-        source: ./app
-        target: /app
+        source: ./api
+        target: /api
     env_file:
       - variables.env
     depends_on:

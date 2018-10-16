@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from flask import jsonify, request
 from flask.views import MethodView
+
 from factories import create_application, create_celery
 from exceptions import APIError
 import store
@@ -35,27 +36,15 @@ app.add_url_rule('/symbols/', view_func=symbols_view,
                  methods=['GET', 'POST', 'DELETE'])
 
 
-@app.route('/fetch/', methods=['GET'])
-def fetch_all():
+@app.route('/update/', methods=['GET'])
+def update_all():
     return store.update_all()
 
 
-@app.route('/single/<symbol>', methods=['GET', ])
-def query_single(symbol):
-    try:
-        fields = request.args['fields']
-    except KeyError:
-        fields = 'ohlcavds'
-    return store.query_single(symbol, fields)
-
-
-@app.route('/batch/<field>', methods=['GET', ])
-def query_batch(field):
-    symbols = request.args.getlist('symbol')
+@app.route('/query', methods=['POST'], defaults={'fields': 'ohlc'})
+@app.route('/query/<fields>', methods=['POST'])
+def query(fields):
+    symbols = request.form.getlist('symbol')
     if not symbols:
-        raise APIError("No symbols provided")
-    return store.query_batch(symbols, field)
-
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', debug=True)
+        raise APIError("No symbols provided", 400)
+    return store.query(symbols, fields)

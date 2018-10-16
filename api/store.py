@@ -5,7 +5,7 @@ import pandas as pd
 
 from flask import Response
 
-from sources import source
+from feeds import feed
 from exceptions import APIError
 from factories import create_application, create_celery
 
@@ -38,7 +38,7 @@ def get_symbols():
     return symbols
 
 
-def in_database(symbol):
+def exists(symbol):
     symbols = get_symbols()
     return symbol in symbols
 
@@ -53,7 +53,7 @@ def add_symbols(symbols):
     for symbol in symbols:
         if symbol in existing:
             raise APIError("Symbol %s already exists in database" % symbol)
-        if not source.has_data(symbol):
+        if not feed.has_data(symbol):
             raise APIError("No data available for symbol: %s" % symbol)
         existing.append(symbol)
     overwrite_symbols(existing)
@@ -74,7 +74,7 @@ def remove_symbols(symbols):
 @celery.task
 def update_background(symbols):
     for i, symbol in enumerate(symbols, 1):
-        df = source.load_single(symbol)
+        df = feed.load_single(symbol)
         df.to_hdf(
             os.path.join(DATA_DIR, symbol),
             key=symbol,
@@ -96,20 +96,31 @@ def update_all():
     return 'Started updating data for %s' % symbols
 
 
-def query_single(symbol, fields="ohlcavds"):
-    if not in_database(symbol):
-        raise APIError("No data for symbol: %s in database" % symbol)
-    columns = []
-    for field in fields:
-        if field not in VALID_FIELDS:
-            raise APIError("Invalid field %s" % field)
-        columns.append(FIELD_MAPPINGS[field])
-    try:
-        df = pd.read_hdf(os.path.join(DATA_DIR, symbol), symbol)
-    except FileNotFoundError:
-        raise APIError("No file for %s" % symbol)
+def query(symbols, fields):
+
+    if not set([f for f in fields]).issubset(VALID_FIELDS):
+        raise APIError(
+            "Invalid fields requested. Available fields: %s" % VALID_FIELDS,
+            400
+        )
+    columns = [FIELD_MAPPINGS[f] for f in fields]
+
+    existing = get_symbols()
+    data = []
+
+    for symbol in symbols:
+        if symbol not in existing:
+            raise APIError("No data for symbol %s" % symbol, 400)
+        try:
+            df = pd.read_hdf(os.path.join(DATA_DIR, symbol), symbol)
+        except FileNotFoundError:
+            raise APIError(
+                "Data for %s has not been fetched yet" % symbol, 500
+            )
+        data.append(df[columns].to_json())
+
     response = Response(
-        response=df[columns].to_json(),
+        response=data,
         status=200,
         mimetype="application/json"
     )

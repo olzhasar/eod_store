@@ -2,11 +2,11 @@ import os
 from alpha_vantage.timeseries import TimeSeries
 
 
-class AbstractSource():
+class Feed():
 
     """
-    Abstract class for Source. This class is responsible for loading
-    market data from external sources. Sources can be clients of API's like
+    Abstract class for Feed. This class is responsible for loading
+    market data from external feeds. Feeds can be clients of API's like
     AlphaVantage, Quandl, or get market data any other way (e.g. web scraping)
     """
 
@@ -17,22 +17,15 @@ class AbstractSource():
         """
         raise NotImplementedError
 
-    def load_batch(symbols):
-        """
-        This function takes list of symbols and should return list of pandas
-        dataframes, containing data for each specified symbol
-        """
-        raise NotImplementedError
-
     def has_data(symbol):
         """
         This function checks whether data for given ticket exists in this
-        source and returns boolean
+        feed and returns boolean
         """
         raise NotImplementedError
 
 
-class AlphaVantage(AbstractSource):
+class AlphaVantage(Feed):
 
     def __init__(self, output_format='pandas'):
         self.ts = TimeSeries(
@@ -51,14 +44,9 @@ class AlphaVantage(AbstractSource):
         }
 
     def load_single(self, symbol, format='full'):
-
         df = self.ts.get_daily_adjusted(symbol, format)[0]
         df.rename(columns=self.COLUMNS_DICT, inplace=True)
-
         return df
-
-    def load_batch(self, symbols, format='full'):
-        pass
 
     def has_data(self, symbol):
         try:
@@ -68,4 +56,4 @@ class AlphaVantage(AbstractSource):
         return True
 
 
-source = AlphaVantage()
+feed = AlphaVantage()
