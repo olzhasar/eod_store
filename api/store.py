@@ -15,61 +15,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'data/')
 SYMBOLS_FILE = os.path.join(DATA_DIR, 'symbols')
 
-FIELD_MAPPINGS = {
-    'o': 'open',
-    'h': 'high',
-    'l': 'low',
-    'c': 'close',
-    'a': 'adj_close',
-    'v': 'volume',
-    'd': 'dividend',
-    's': 'split_coeff'
-}
-
-VALID_FIELDS = list(FIELD_MAPPINGS.keys())
-
-
-def get_symbols():
-    try:
-        with open(SYMBOLS_FILE, 'rb') as f:
-            symbols = pickle.load(f)
-    except EOFError:
-        symbols = []
-    return symbols
-
-
-def exists(symbol):
-    symbols = get_symbols()
-    return symbol in symbols
-
-
-def overwrite_symbols(symbols):
-    with open(SYMBOLS_FILE, 'wb') as f:
-        pickle.dump(symbols, f)
-
-
-def add_symbols(symbols):
-    existing = get_symbols()
-    for symbol in symbols:
-        if symbol in existing:
-            raise APIError("Symbol %s already exists in database" % symbol)
-        if not feed.has_data(symbol):
-            raise APIError("No data available for symbol: %s" % symbol)
-        existing.append(symbol)
-    overwrite_symbols(existing)
-    return "Successfully added symbols %s to database" % symbols
-
-
-def remove_symbols(symbols):
-    existing = get_symbols()
-    for symbol in symbols:
-        if symbol not in existing:
-            raise APIError("Symbol %s not found in database" % symbol)
-        existing.remove(symbol)
-        # Delete all files in DATA_DIR
-    overwrite_symbols(existing)
-    return "Successfully deleted all data for symbols %s" % symbols
-
 
 @celery.task
 def update_background(symbols):
@@ -83,11 +28,6 @@ def update_background(symbols):
         print("Successfully updated data for %s" % symbol)
         if i < len(symbols):
             time.sleep(20)
-
-
-@celery.task
-def print_something():
-    print("SOMETHING")
 
 
 def update_all():

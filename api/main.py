@@ -1,50 +1,70 @@
 #!/usr/bin/env python
-from flask import jsonify, request
-from flask.views import MethodView
+import os
+import pandas as pd
+from jsonrpc.backend.flask import api
+from jsonrpc.exceptions import JSONRPCDispatchException
 
 from factories import create_application, create_celery
-from exceptions import APIError
-import store
 
 app = create_application()
 celery = create_celery(app)
 
+FIELD_MAPPINGS = {
+    'o': 'open',
+    'h': 'high',
+    'l': 'low',
+    'c': 'close',
+    'a': 'adj_close',
+    'v': 'volume',
+    'd': 'dividend',
+    's': 'split_coeff'
+}
 
-@app.errorhandler(APIError)
-def handle_invalid_usage(error):
-    response = jsonify(error.to_dict())
-    response.status_code = error.status_code
-    return response
-
-
-class SymbolsAPI(MethodView):
-
-    def get(self):
-        return jsonify(store.get_symbols())
-
-    def post(self):
-        return store.add_symbols(request.form.getlist('symbol'))
-
-    def delete(self):
-        return store.remove_symbols(request.form.getlist('symbol'))
+VALID_FIELDS = list(FIELD_MAPPINGS.keys())
 
 
-symbols_view = SymbolsAPI.as_view('symbols')
-app.add_url_rule('/', view_func=symbols_view,
-                 methods=['GET'])
-app.add_url_rule('/symbols/', view_func=symbols_view,
-                 methods=['GET', 'POST', 'DELETE'])
+def _csv():
+    return pd.read_csv(app.config.SYMBOLS_FILE, header=0)
 
 
-@app.route('/update/', methods=['GET'])
-def update_all():
-    return store.update_all()
+def get_symbols():
+    return _csv.index.tolist()
 
 
-@app.route('/query', methods=['POST'], defaults={'fields': 'ohlc'})
-@app.route('/query/<fields>', methods=['POST'])
-def query(fields):
-    symbols = request.form.getlist('symbol')
-    if not symbols:
-        raise APIError("No symbols provided", 400)
-    return store.query(symbols, fields)
+def exists(symbol):
+    return symbol in get_symbols()
+
+
+app.add_url_rule('/', 'api', api.as_view(), methods=['POST'])
+
+
+@api.dispatcher.add_method
+def query_single(**kwargs):
+    try:
+        symbol = kwargs['symbol']
+    except KeyError:
+        raise JSONRPCDispatchException(
+            code=-32600,
+            message='Symbol must be provided'
+        )
+    assert isinstance(symbol, str)
+    fields = kwargs.get('fields', 'ohlc')
+    if not set([f for f in fields]).issubset(VALID_FIELDS):
+        raise JSONRPCDispatchException(
+            code=-32600,
+            message='Invalid fields specified'
+        )
+    columns = [FIELD_MAPPINGS[f] for f in fields]
+    try:
+        df = pd.read_hdf(os.path.join(app.config['DATA_DIR'], symbol), symbol)
+    except FileNotFoundError:
+        raise JSONRPCDispatchException(
+            code=-32000,
+            message='No data for symbol %s' % symbol
+        )
+    return df[columns].to_json()
+
+
+@api.dispatcher.add_method
+def query_multiple(**kwargs):
+    pass

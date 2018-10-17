@@ -6,10 +6,16 @@ CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL',
                                    'redis://localhost:6379')
 CELERY_RESULTS_BACKEND = os.environ.get('CELERY_BROKER_URL',
                                         'redis://localhost:6379')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(BASE_DIR, 'data/')
 
 
 def create_application():
     app = Flask(__name__)
+    app.config.update(
+        DATA_DIR=DATA_DIR,
+        SYMBOLS_FILE=os.path.join(DATA_DIR, 'symbols.csv')
+    )
     return app
 
 
@@ -28,6 +34,7 @@ def create_celery(application):
 
     celery.Task = ContextTask
 
+    """
     celery.conf.beat_schedule = {
         'print-every-30-seconds': {
             'task': 'store.print_something',
@@ -35,7 +42,7 @@ def create_celery(application):
             'args': ()
         },
     }
-
     celery.conf.timezone = 'UTC'
+    """
 
     return celery
