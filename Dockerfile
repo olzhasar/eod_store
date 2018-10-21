@@ -19,4 +19,4 @@ EXPOSE 5000
 
 RUN pip install gunicorn
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "main:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "wsgi:app"]

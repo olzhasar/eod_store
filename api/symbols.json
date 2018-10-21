@@ -1,0 +1,26 @@
+{ 
+    "TLT": {
+        "currency": "USD",
+        "asset_class": "Fixed Income"
+    },
+    "BND": {
+        "currency": "USD",
+        "asset_class": "Fixed Income"
+    },
+    "GLD": {
+        "currency": "USD",
+        "asset_class": "Commodity"
+    },
+    "SPY": {
+        "currency": "USD",
+        "asset_class": "Equity"
+    },
+    "QQQ": {
+        "currency": "USD",
+        "asset_class": "Equity"
+    },
+    "SPLV": {
+        "currency": "USD",
+        "asset_class": "Equity"
+    }
+}
