@@ -2,7 +2,7 @@ import os
 from flask import Flask, jsonify
 from celery import Celery
 
-from exceptions import APIError
+from .exceptions import APIError
 
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL',
                                    'redis://localhost:6379')
@@ -30,7 +30,7 @@ def create_application(test_config=None):
         response.status_code = error.status_code
         return response
 
-    import store
+    from . import store
     app.register_blueprint(store.bp)
 
     return app

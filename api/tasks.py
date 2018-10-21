@@ -1,8 +1,8 @@
 import os
 import time
 
-from factories import create_application, create_celery
-from feeds import feed
+from .factories import create_application, create_celery
+from .feeds import feed
 
 celery = create_celery(create_application())
 

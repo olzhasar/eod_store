@@ -4,7 +4,7 @@ import pandas as pd
 
 from flask import Blueprint, request, Response, jsonify, current_app as app
 
-from exceptions import APIError
+from .exceptions import APIError
 
 bp = Blueprint('store', __name__)
 

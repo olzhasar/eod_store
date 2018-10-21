@@ -13,10 +13,8 @@ RUN touch data/symbols
 
 COPY /api /api
 
-WORKDIR /api
-
 EXPOSE 5000
 
 RUN pip install gunicorn
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "wsgi:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "api.wsgi:app"]

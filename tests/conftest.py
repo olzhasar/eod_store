@@ -12,7 +12,7 @@ sys.path.insert(0, myPath + '/../')
 @pytest.fixture
 def app():
 
-    app = create_application(TESTING=True)
+    app = create_application({'TESTING': True})
 
     yield app
 
