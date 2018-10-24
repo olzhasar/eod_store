@@ -13,8 +13,8 @@ RUN touch data/db.json
 
 COPY /api /api
 
-EXPOSE 5000
+EXPOSE 8000
 
 RUN pip install gunicorn
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "api.wsgi:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "api.wsgi:app"]

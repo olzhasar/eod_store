@@ -9,7 +9,7 @@ services:
       "api.wsgi:app"
     restart: always
     ports:
-      - "5000:5000"
+      - "8000:8000/tcp"
     volumes:
       - type: volume
         source: data
