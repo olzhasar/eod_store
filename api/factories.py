@@ -16,7 +16,7 @@ def create_application(test_config=None):
     app = Flask(__name__)
     app.config.from_mapping(
         DATA_DIR=DATA_DIR,
-        SYMBOLS_FILE=os.path.join(BASE_DIR, 'symbols.json'),
+        DB_PATH=os.path.join(DATA_DIR, 'db.json'),
     )
 
     if test_config is None:

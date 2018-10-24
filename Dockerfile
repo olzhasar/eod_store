@@ -9,7 +9,7 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 RUN mkdir data/
-RUN touch data/symbols
+RUN touch data/db.json
 
 COPY /api /api
 
